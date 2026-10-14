@@ -1,0 +1,16 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Alyn & Syarifuddin//Wedding Invitation//MS
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:alyn-syarifuddin-20261212@wedding
+DTSTAMP:20261013T050000Z
+DTSTART;VALUE=DATE:20261212
+DTEND;VALUE=DATE:20261213
+SUMMARY:Perkahwinan Alyn & Syarifuddin
+LOCATION:Asiana Grand Hall Cheras\, Lot 1-1 Amerin Mall\, Persiaran Impian 
+ Indah\, 43300 Seri Kembangan\, Selangor
+DESCRIPTION:Raikan perkahwinan Alyn & Syarifuddin.
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR
