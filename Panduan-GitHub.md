@@ -18,7 +18,7 @@ GitHub Pages boleh digunakan pada **repo Public dengan GitHub Free**. Laman ini 
 
 1. Buka spreadsheet anda:
 
-   https://docs.google.com/spreadsheets/d/1Lwhguvd_Q2paT3ciJvbxJaLcKk9BoyLJMYUh5oBQFEg/edit
+   https://docs.google.com/spreadsheets/d/1yBOP11_vfsCi3MxrrsHuGknbMBv5WABZeS_EBlMNvtM/edit
 
 2. Pilih **Extensions → Apps Script**. Gunakan projek Apps Script sedia ada supaya URL `/exec` boleh dikekalkan.
 3. Ganti keseluruhan kandungan **Code.gs** dengan fail **apps-script/Code.gs** dalam ZIP, atau **Code-GitHub.gs** yang dimuat turun berasingan.
@@ -29,7 +29,7 @@ GitHub Pages boleh digunakan pada **repo Public dengan GitHub Free**. Laman ini 
 URL sedia ada sudah dimasukkan dalam HTML:
 
 ```js
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwa7kr-0-iVQwHfdI10gdEXC5XzFujzL6tnpvMEs9l54qeT31rv7n2ByJgBhrZb-vbs/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxLHAzDCm4qePOU881KgUl09nkfESW4R8xOZyIW7goj33boeJ9wIa63LWMZu71Wn_DM/exec';
 ```
 
 Jika anda membuat deployment baharu dan mendapat URL berbeza, cari **const SCRIPT_URL** dalam index.html dan ganti nilainya dengan URL `/exec` yang baharu. Ganti hanya nilai URL itu.
