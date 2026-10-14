@@ -29,7 +29,7 @@ GitHub Pages boleh digunakan pada **repo Public dengan GitHub Free**. Laman ini 
 URL sedia ada sudah dimasukkan dalam HTML:
 
 ```js
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxhklSa5d8aU9RsF7I0C2fu7OmqjvIia9zL5qwSHgWXaNKrNtGUH487lNUo-ip_uSbz/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFssShZLfMEHRyitn50GT5sF3gaSbbjMd_ldATWrw4e2YEJwBjbgcIADhbl3i61Ojj/exec';
 ```
 
 Jika anda membuat deployment baharu dan mendapat URL berbeza, cari **const SCRIPT_URL** dalam index.html dan ganti nilainya dengan URL `/exec` yang baharu. Ganti hanya nilai URL itu.
