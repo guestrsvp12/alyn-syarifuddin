@@ -609,7 +609,7 @@ legend { padding:0; }
     const refresh = $('.refresh-button'); refresh.disabled = true; refresh.querySelector('svg').classList.add('spin');
     moreButton.disabled = true;
     try {
-      const result = await api('list', { offset: append ? nextOffset : 0, limit: 24, visitorId });
+      const result = await api('list', { offset: append ? nextOffset : 0, limit: 100, visitorId });
       if (!result || !result.ok || !Array.isArray(result.items)) throw new Error(result && result.message || 'Ucapan belum dapat dimuatkan.');
       ready = true; availability.hidden = true;
       reactionsReady = result.reactionsEnabled === true;
