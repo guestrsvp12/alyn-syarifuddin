@@ -214,7 +214,7 @@ legend { padding:0; }
 .map-frame{height:320px;min-width:0}
 .map-frame iframe{display:block;width:100%;height:100%;min-height:0;border:0}
 @media(max-width:600px){.map-frame{height:280px}}
-<style>
+  /* Kotak ucapan dengan skrol dalaman sahaja */
 .wishes-grid {
   max-height: 660px;
   max-height: min(660px, 65svh);
@@ -603,154 +603,46 @@ legend { padding:0; }
     more.hidden = nextOffset === null;
   }
 
-async function loadWishes(append) {
-  if (wishesBusy || !hasBackend) return;
-
-  wishesBusy = true;
-  wishError.hidden = true;
-
-  const refresh = $('.refresh-button');
-  refresh.disabled = true;
-  refresh.querySelector('svg').classList.add('spin');
-  moreButton.disabled = true;
-  more.hidden = true;
-
-  let offset =
-    append && Number.isInteger(nextOffset)
-      ? nextOffset
-      : 0;
-
-  try {
-    while (true) {
-      const result = await api('list', {
-        offset,
-        limit: 6,
-        visitorId
-      });
-
-      if (
-        !result ||
-        !result.ok ||
-        !Array.isArray(result.items)
-      ) {
-        throw new Error(
-          result && result.message ||
-          'Ucapan belum dapat dimuatkan.'
-        );
-      }
-
-      ready = true;
-      availability.hidden = true;
+  async function loadWishes(append) {
+    if (wishesBusy || !hasBackend) return;
+    wishesBusy = true; wishError.hidden = true;
+    const refresh = $('.refresh-button'); refresh.disabled = true; refresh.querySelector('svg').classList.add('spin');
+    moreButton.disabled = true;
+    try {
+      const result = await api('list', { offset: append ? nextOffset : 0, limit: 6, visitorId });
+      if (!result || !result.ok || !Array.isArray(result.items)) throw new Error(result && result.message || 'Ucapan belum dapat dimuatkan.');
+      ready = true; availability.hidden = true;
       reactionsReady = result.reactionsEnabled === true;
-
-      const items = result.items.filter(item =>
-        item &&
-        typeof item.id === 'string' &&
-        typeof item.name === 'string' &&
-        typeof item.message === 'string'
-      );
-
+      const items = result.items.filter(item => item && typeof item.id === 'string' && typeof item.name === 'string' && typeof item.message === 'string');
       items.forEach(mergeReactionState);
-
-      const reset = !append && offset === 0;
-      const existingIds = new Set(
-        reset ? [] : wishItems.map(item => item.id)
-      );
-
-      const freshItems = items.filter(item => {
-        if (existingIds.has(item.id)) return false;
-        existingIds.add(item.id);
-        return true;
-      });
-
-      wishItems = reset
-        ? freshItems
-        : wishItems.concat(freshItems);
-
-      const previousScroll = wishesGrid.scrollTop;
-
-      nextOffset = null;
+      wishItems = append ? wishItems.concat(items.filter(item => !wishItems.some(old => old.id === item.id))) : items;
+      nextOffset = Number.isInteger(result.nextOffset) ? result.nextOffset : null;
       renderWishes();
-      more.hidden = true;
-      wishesGrid.scrollTop = reset ? 0 : previousScroll;
-
-      // Hentikan jika tiada data atau tiada ucapan baharu.
-      if (
-        result.items.length === 0 ||
-        freshItems.length === 0
-      ) {
-        break;
-      }
-
-      // Gunakan nombor halaman daripada Apps Script.
-      if (
-        Number.isInteger(result.nextOffset) &&
-        result.nextOffset > offset
-      ) {
-        offset = result.nextOffset;
-        continue;
-      }
-
-      // Jika metadata halaman tiada, cuba kumpulan berikutnya.
-      if (result.items.length >= 6) {
-        offset += result.items.length;
-        continue;
-      }
-
-      break;
+    } catch (error) {
+      wishError.textContent = error.message; wishError.hidden = false;
+      if (!ready) availability.textContent = 'Pengesahan kehadiran belum tersedia. Sila cuba lagi sebentar.';
+    } finally {
+      wishesBusy = false; refresh.disabled = false; refresh.querySelector('svg').classList.remove('spin'); moreButton.disabled = false;
+      submitButton.disabled = busy || !ready;
     }
-  } catch (error) {
-    wishError.textContent = error.message;
-    wishError.hidden = false;
-
-    if (!ready) {
-      availability.textContent =
-        'Pengesahan kehadiran belum tersedia. Sila cuba lagi sebentar.';
-    }
-  } finally {
-    nextOffset = null;
-    wishesBusy = false;
-    more.hidden = true;
-    moreButton.disabled = false;
-    refresh.disabled = false;
-    refresh.querySelector('svg').classList.remove('spin');
-    submitButton.disabled = busy || !ready;
   }
-}
   $('.refresh-button').addEventListener('click', () => loadWishes(false));
   moreButton.addEventListener('click', () => loadWishes(true));
-// Scroll dalam kotak untuk membaca semua ucapan.
+  // Ucapan seterusnya dimuat apabila tetamu scroll dalam kotak.
 wishesGrid.tabIndex = 0;
 wishesGrid.setAttribute('role', 'region');
-wishesGrid.setAttribute(
-  'aria-label',
-  'Ucapan tetamu. Skrol untuk membaca semua ucapan.'
-);
+wishesGrid.setAttribute('aria-label', 'Ucapan tetamu, skrol untuk membaca lagi');
 
-function loadNextWishesOnScroll() {
-  if (
-    wishesGrid.hidden ||
-    wishesGrid.clientHeight === 0 ||
-    wishesBusy ||
-    nextOffset === null ||
-    !wishError.hidden
-  ) return;
-
-  const remaining =
+wishesGrid.addEventListener('scroll', () => {
+  const nearBottom =
     wishesGrid.scrollHeight -
     wishesGrid.scrollTop -
-    wishesGrid.clientHeight;
+    wishesGrid.clientHeight < 100;
 
-  if (remaining <= 150) {
+  if (nearBottom && !wishesBusy && nextOffset !== null) {
     loadWishes(true);
   }
-}
-
-wishesGrid.addEventListener(
-  'scroll',
-  loadNextWishesOnScroll,
-  { passive: true }
-);
+}, { passive: true });
 
   function showReceipt(data) {
     const card = node('div', 'success-card');
@@ -968,4 +860,8 @@ wishesGrid.addEventListener(
     $('.countdown').textContent = remaining ? 'Menuju 12 Disember 2026' : 'Hari bahagia telah tiba';
   }
   updateCountdown(); setInterval(updateCountdown, 1000);
-  if 
+  if (hasBackend) loadWishes(false);
+  else { availability.textContent = 'RSVP belum tersedia di pratonton ini.'; $('.refresh-button').disabled = true; }
+})();
+
+  </script></body></html>
