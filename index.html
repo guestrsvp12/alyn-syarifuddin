@@ -214,7 +214,7 @@ legend { padding:0; }
 .map-frame{height:320px;min-width:0}
 .map-frame iframe{display:block;width:100%;height:100%;min-height:0;border:0}
 @media(max-width:600px){.map-frame{height:280px}}
-  /* Kotak ucapan dengan skrol dalaman sahaja */
+<style>
 .wishes-grid {
   max-height: 660px;
   max-height: min(660px, 65svh);
@@ -624,25 +624,43 @@ legend { padding:0; }
     } finally {
       wishesBusy = false; refresh.disabled = false; refresh.querySelector('svg').classList.remove('spin'); moreButton.disabled = false;
       submitButton.disabled = busy || !ready;
+      requestAnimationFrame(loadNextWishesOnScroll);
     }
   }
   $('.refresh-button').addEventListener('click', () => loadWishes(false));
   moreButton.addEventListener('click', () => loadWishes(true));
-  // Ucapan seterusnya dimuat apabila tetamu scroll dalam kotak.
+// Scroll dalam kotak untuk membaca semua ucapan.
 wishesGrid.tabIndex = 0;
 wishesGrid.setAttribute('role', 'region');
-wishesGrid.setAttribute('aria-label', 'Ucapan tetamu, skrol untuk membaca lagi');
+wishesGrid.setAttribute(
+  'aria-label',
+  'Ucapan tetamu. Skrol untuk membaca semua ucapan.'
+);
 
-wishesGrid.addEventListener('scroll', () => {
-  const nearBottom =
+function loadNextWishesOnScroll() {
+  if (
+    wishesGrid.hidden ||
+    wishesGrid.clientHeight === 0 ||
+    wishesBusy ||
+    nextOffset === null ||
+    !wishError.hidden
+  ) return;
+
+  const remaining =
     wishesGrid.scrollHeight -
     wishesGrid.scrollTop -
-    wishesGrid.clientHeight < 100;
+    wishesGrid.clientHeight;
 
-  if (nearBottom && !wishesBusy && nextOffset !== null) {
+  if (remaining <= 150) {
     loadWishes(true);
   }
-}, { passive: true });
+}
+
+wishesGrid.addEventListener(
+  'scroll',
+  loadNextWishesOnScroll,
+  { passive: true }
+);
 
   function showReceipt(data) {
     const card = node('div', 'success-card');
