@@ -605,44 +605,65 @@ legend { padding:0; }
 
   async function loadWishes(append) {
     if (wishesBusy || !hasBackend) return;
-    wishesBusy = true; wishError.hidden = true;
-    const refresh = $('.refresh-button'); refresh.disabled = true; refresh.querySelector('svg').classList.add('spin');
+    wishesBusy = true;
+    wishError.hidden = true;
+    wishesGrid.setAttribute('aria-busy', 'true');
+    const refresh = $('.refresh-button');
+    refresh.disabled = true;
+    refresh.querySelector('svg').classList.add('spin');
     moreButton.disabled = true;
+    more.hidden = true;
+    const pageSize = 6;
+    let offset = append && Number.isInteger(nextOffset) ? nextOffset : 0;
+    let firstPage = true;
     try {
-      const result = await api('list', { offset: append ? nextOffset : 0, limit: 25, visitorId });
-      if (!result || !result.ok || !Array.isArray(result.items)) throw new Error(result && result.message || 'Ucapan belum dapat dimuatkan.');
-      ready = true; availability.hidden = true;
-      reactionsReady = result.reactionsEnabled === true;
-      const items = result.items.filter(item => item && typeof item.id === 'string' && typeof item.name === 'string' && typeof item.message === 'string');
-      items.forEach(mergeReactionState);
-      wishItems = append ? wishItems.concat(items.filter(item => !wishItems.some(old => old.id === item.id))) : items;
-      nextOffset = Number.isInteger(result.nextOffset) ? result.nextOffset : null;
-      renderWishes();
+      while (true) {
+        const result = await api('list', { offset, limit: pageSize, visitorId });
+        if (!result || !result.ok || !Array.isArray(result.items)) {
+          throw new Error(result && result.message || 'Ucapan belum dapat dimuatkan.');
+        }
+        ready = true;
+        availability.hidden = true;
+        reactionsReady = result.reactionsEnabled === true;
+        const items = result.items.filter(item => item && typeof item.id === 'string' && typeof item.name === 'string' && typeof item.message === 'string');
+        items.forEach(mergeReactionState);
+        const reset = firstPage && !append;
+        // Each returned row is a wish. Some existing sheet rows share IDs,
+        // so IDs cannot be used to discard rows from the public list.
+        const scrollTop = reset ? 0 : wishesGrid.scrollTop;
+        wishItems = reset ? items : wishItems.concat(items);
+        let following = null;
+        if (Number.isInteger(result.nextOffset) && result.nextOffset > offset) {
+          following = result.nextOffset;
+        } else if (!Object.prototype.hasOwnProperty.call(result, 'nextOffset') && result.items.length >= pageSize) {
+          following = offset + result.items.length;
+        }
+        nextOffset = following;
+        renderWishes();
+        more.hidden = true;
+        wishesGrid.scrollTop = scrollTop;
+        firstPage = false;
+        if (!result.items.length || following === null) { nextOffset = null; break; }
+        offset = following;
+      }
     } catch (error) {
-      wishError.textContent = error.message; wishError.hidden = false;
+      wishError.textContent = error.message || 'Ucapan belum dapat dimuatkan.';
+      wishError.hidden = false;
       if (!ready) availability.textContent = 'Pengesahan kehadiran belum tersedia. Sila cuba lagi sebentar.';
     } finally {
-      wishesBusy = false; refresh.disabled = false; refresh.querySelector('svg').classList.remove('spin'); moreButton.disabled = false;
+      wishesBusy = false;
+      wishesGrid.setAttribute('aria-busy', 'false');
+      refresh.disabled = false;
+      refresh.querySelector('svg').classList.remove('spin');
+      moreButton.disabled = false;
+      more.hidden = true;
       submitButton.disabled = busy || !ready;
     }
   }
   $('.refresh-button').addEventListener('click', () => loadWishes(false));
-  moreButton.addEventListener('click', () => loadWishes(true));
-  // Ucapan seterusnya dimuat apabila tetamu scroll dalam kotak.
-wishesGrid.tabIndex = 0;
-wishesGrid.setAttribute('role', 'region');
-wishesGrid.setAttribute('aria-label', 'Ucapan tetamu, skrol untuk membaca lagi');
-
-wishesGrid.addEventListener('scroll', () => {
-  const nearBottom =
-    wishesGrid.scrollHeight -
-    wishesGrid.scrollTop -
-    wishesGrid.clientHeight < 100;
-
-  if (nearBottom && !wishesBusy && nextOffset !== null) {
-    loadWishes(true);
-  }
-}, { passive: true });
+  wishesGrid.tabIndex = 0;
+  wishesGrid.setAttribute('role', 'region');
+  wishesGrid.setAttribute('aria-label', 'Ucapan tetamu. Skrol dalam kotak untuk membaca semua ucapan.');
 
   function showReceipt(data) {
     const card = node('div', 'success-card');
